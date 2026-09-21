@@ -1,134 +1,119 @@
 
-# EX 5A 0/1 Knapsack Problem - Branch&Bound 
-## DATE:09/10/25
+# EX 5B Topological Sort - Khan's Algorithm
+## DATE:16/10/25
 ## AIM:
-To Write a Java program to solve 0/1 Knapsack problem using Branch and Bound Approach.
-You are heading a college entrepreneurship cell that can invest in up to N student‑startups.
+To write a Java program to for given constraints.
+Problem Description:
+A software development team is preparing for a product release. The release consists of multiple tasks, each dependent on other tasks being completed first. You are to determine a valid order in which all tasks can be completed. If it's not possible due to cyclic dependencies, output that the release cannot be scheduled.
 
-For each startup i you know: cost[i]  — the amount (in ₹ lakh) required to join the showcase profit[i] — the estimated profit (in ₹ lakh) you’ll gain if it succeeds You have a total budget of B ₹ lakh. Pick a subset of startups so that the sum of costs ≤ B and the sum of profits is maximised.
+Each task is labeled from 0 to n-1. The dependencies are provided in the form of pairs [a, b] which means task a depends on task b.
 
-Because N can be as large as 50, a plain exhaustive search (2^N) is too slow.
+Implement a program to find a valid task execution order using topological sort.
 
-The recommended approach is Branch & Bound with a fractional‑knapsack upper bound (but any algorithm that meets the constraints is accepted). 
+Input Format:
 
-Input Format
+An integer n — number of tasks.
 
-N
+An integer m — number of dependencies.
 
-B
+m lines follow with two integers a and b — representing a depends on b.
 
-cost[1] cost[2] … cost[N]
+Output Format:
 
-profit[1] profit[2] … profit[N]
+If a valid order exists, print the task numbers in a possible execution order (space-separated).
 
-1 ≤ N ≤ 50
+If not, print "Release cannot be scheduled".
 
-1 ≤ B ≤ 1 000 000
-
-1 ≤ cost[i], profit[i] ≤ 10 000 
-
-Output Format
-
-maxProfit
-
-For example:
-
-
-
+<img width="341" height="363" alt="image" src="https://github.com/user-attachments/assets/f0355541-4f66-49da-bcd3-171a799a7c1f" />
 
 ## Algorithm
-1.Start and read the number of startups N, total budget B, and each startup’s cost and profit.
+1.Start and read the number of tasks n and dependency pairs.
 
-2.Sort the startups in descending order of profit-to-cost ratio to improve bounding efficiency.
+2.Build a directed graph using an adjacency list and compute the indegree of each node.
 
-3.Define a bound function to compute the upper bound of achievable profit (including fractional profit if budget remains).
+3.Add all nodes with indegree = 0 (no dependencies) to a queue.
 
-4.Use DFS with Branch and Bound:
+4.While the queue is not empty:
 
-Explore two possibilities for each startup — include it (if within budget) or exclude it.
+Remove a task, add it to the task order.
 
-Prune any branch where the upper bound ≤ current best profit.
+Decrease the indegree of its dependent tasks; if any reaches 0, add it to the queue.
 
-5.Return the highest profit (best) obtained from feasible startup selections within the budget.
-   
+5.Check completion:
+
+If all tasks are processed, print the task order; otherwise, print “Release cannot be scheduled.”
+
 
 ## Program:
 ```
 /*
 Program to implement Reverse a String
+Developed by: N.Navya Sree
+Register Number:  212223040138
 */
 import java.util.*;
 
-public class StartupShowcaseOptimizer {
+public class prog{
 
-    // ---------- Global data ----------
-    static int N, B;
-    static int[] c, p;          // cost, profit after sorting by ratio
-    static int best = 0;        // incumbent best profit
+    public static List<Integer> findTaskOrder(int n, int[][] dependencies) {
+        List<Integer> order = new ArrayList<>();
+        List<List<Integer>> graph = new ArrayList<>();
+        int[] indegree = new int[n];
 
-    // ---------- Fractional upper bound ----------
-    static double bound(int idx, int cw, int cv) {
-        if (cw >= B) return cv;                 // bag full or overweight
-        double val = cv;
-        int rem = B - cw;
+        for (int i = 0; i < n; i++) graph.add(new ArrayList<>());
 
-        while (idx < N && c[idx] <= rem) {      // add full items
-            rem -= c[idx];
-            val += p[idx];
-            idx++;
+        for (int[] dep : dependencies) {
+            graph.get(dep[1]).add(dep[0]);
+            indegree[dep[0]]++;
         }
-        if (idx < N) val += p[idx] * (rem / (double) c[idx]); // fractional part
-        return val;
-    }
 
-    // ---------- DFS Branch & Bound ----------
-    static void dfs(int idx, int cw, int cv) {
-        if (idx == N) {                 // leaf
-            best = Math.max(best, cv);
-            return;
+        Queue<Integer> q = new LinkedList<>();
+        for (int i = 0; i < n; i++) {
+            if (indegree[i] == 0) q.offer(i);
         }
-        if (bound(idx, cw, cv) <= best) return; // prune
 
-        // 1. include current startup if it fits
-        if (cw + c[idx] <= B)
-            dfs(idx + 1, cw + c[idx], cv + p[idx]);
+        while (!q.isEmpty()) {
+            int curr = q.poll();
+            order.add(curr);
+            for (int neighbor : graph.get(curr)) {
+                indegree[neighbor]--;
+                if (indegree[neighbor] == 0) q.offer(neighbor);
+            }
+        }
 
-        // 2. exclude current startup
-        dfs(idx + 1, cw, cv);
+        if (order.size() != n) return null;
+        return order;
     }
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        N = sc.nextInt();
-        B = sc.nextInt();
-        int[] cost = new int[N];
-        int[] prof = new int[N];
-        for (int i = 0; i < N; i++) cost[i] = sc.nextInt();
-        for (int i = 0; i < N; i++) prof[i] = sc.nextInt();
-        sc.close();
+        int n = sc.nextInt(); // number of tasks
+        int m = sc.nextInt(); // number of dependencies
 
-        // Sort by profit/cost ratio descending → tighter bounds
-        Integer[] idx = new Integer[N];
-        Arrays.setAll(idx, i -> i);
-        Arrays.sort(idx, Comparator.comparingDouble(i -> -(double) prof[i] / cost[i]));
-
-        c = new int[N];
-        p = new int[N];
-        for (int i = 0; i < N; i++) {
-            c[i] = cost[idx[i]];
-            p[i] = prof[idx[i]];
+        int[][] dependencies = new int[m][2];
+        for (int i = 0; i < m; i++) {
+            dependencies[i][0] = sc.nextInt(); // a
+            dependencies[i][1] = sc.nextInt(); // b
         }
 
-        dfs(0, 0, 0);
-        System.out.println(best);
+        List<Integer> result = findTaskOrder(n, dependencies);
+
+        if (result == null) {
+            System.out.println("Release cannot be scheduled");
+        } else {
+            for (int task : result) {
+                System.out.print(task + " ");
+            }
+        }
     }
 }
+
 ```
 
 ## Output:
 
-<img width="328" height="208" alt="image" src="https://github.com/user-attachments/assets/e2b69770-db78-47bd-b494-21c1d2fb752e" />
+<img width="685" height="505" alt="image" src="https://github.com/user-attachments/assets/46d10218-1c7c-4711-a8e5-f04a077ca40d" />
 
 
 ## Result:
-The program successfully solved 0/1 Knapsack problem using branch & bound and output is verified. 
+The program successfully implemented and the expected output is verified.
