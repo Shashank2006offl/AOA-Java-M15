@@ -1,40 +1,40 @@
 
-# EX 5C Graph coloring
-## DATE:23/10/25
+# EX 5D Flower Planting.
+## DATE:03/11/25
 ## AIM:
 To write a Java program to for given constraints.
-Problem Description:
-In a hilly region, several radio towers are installed to provide communication services. However, due to signal interference, two adjacent towers (i.e., in communication range of each other) must not use the same frequency channel.
+You are given n gardens, labelled from 1 to n.
 
-You are given N radio towers and their communication ranges represented as an undirected graph. Your task is to assign channels (colors) to these towers using at most M channels such that no two adjacent towers use the same channel.
+You also have a list called paths, where each element paths[i] = [xi, yi] represents a bidirectional road connectingthe  garden xi and garden yi.
 
-Write a program to determine if such an assignment is possible or not.
+You want to plant one flower in each garden, and there are exactly 4 types of flowers labelled as 1, 2, 3, and 4.
 
-Input Format:
-First line contains two integers: N (number of towers), and M (number of available frequency channels).
+Your goal is to plant flowers such that:
 
-Next line contains an integer E — number of edges representing the communication range.
+No two connected gardens (i.e., connected via a path) have the same flower type.
 
-Next E lines contain two integers u and v — representing that tower u and tower v are within range (0-based index).
+Return any valid flower assignment as an array where:
 
-Output Format:
-Print "YES" if it's possible to assign frequencies to towers such that no two adjacent towers have the same frequency.
+answer[i] is the flower type planted in the (i+1) ᵗʰ garden
 
-Otherwise, print "NO".
+It is guaranteed that:
 
-<img width="182" height="440" alt="image" src="https://github.com/user-attachments/assets/b32078a2-c79d-4a25-88c4-e51144b5456f" />
+No garden is connected to more than 3 other gardens
 
+A valid flower assignment always exists
+
+<img width="177" height="292" alt="image" src="https://github.com/user-attachments/assets/36aa40cb-1cdd-4746-b1a6-fc51ce6e96aa" />
 
 ## Algorithm
-1.Start and read the number of nodes n, available colors m, and edges e.
+1.Start and read the number of gardens n and paths m.
 
-2.Construct an adjacency list to represent the graph connections.
+2.Build an adjacency list to represent which gardens are connected.
 
-3.Assign colors to each node one by one using recursion.
+3.For each garden, check the flower types already used by its connected neighbors.
 
-4.Before coloring a node, check if assigning the current color is safe (no adjacent node has the same color).
+4.Assign the smallest available flower type (1–4) that isn’t used by any neighbor.
 
-5.If all nodes can be safely colored, print “YES”; otherwise, print “NO.”  
+5.After assigning flowers to all gardens, print the final flower arrangement.   
 
 ## Program:
 ```
@@ -43,55 +43,64 @@ Program to implement Reverse a String
 */
 import java.util.*;
 
-public class prog {
+public class GardenFlowerPlanner {
 
-    public static boolean isColorable(List<List<Integer>> graph, int[] color, int node, int m, int n) {
-        if (node == n) return true;
+    public static int[] assignFlowers(int n, int[][] paths) {
+        @SuppressWarnings("unchecked")
+        List<Integer>[] adj = new ArrayList[n];
 
-        for (int c = 1; c <= m; c++) {
-            if (isSafe(graph, color, node, c)) {
-                color[node] = c;
-                if (isColorable(graph, color, node + 1, m, n))
-                    return true;
-                color[node] = 0;
+        for (int i = 0; i < n; i++) {
+            adj[i] = new ArrayList<>();
+        }
+
+        for (int[] path : paths) {
+            int a = path[0] - 1;
+            int b = path[1] - 1;
+            adj[a].add(b);
+            adj[b].add(a);
+        }
+
+        int[] result = new int[n]; // answer[i] is the flower type of garden i+1
+
+        for (int i = 0; i < n; i++) {
+            boolean[] used = new boolean[5]; // flowers 1 to 4
+
+            for (int neighbor : adj[i]) {
+                int flower = result[neighbor];
+                if (flower != 0) {
+                    used[flower] = true;
+                }
+            }
+
+            for (int flower = 1; flower <= 4; flower++) {
+                if (!used[flower]) {
+                    result[i] = flower;
+                    break;
+                }
             }
         }
-        return false;
-    }
 
-    public static boolean isSafe(List<List<Integer>> graph, int[] color, int node, int c) {
-        for (int neighbor : graph.get(node)) {
-            if (color[neighbor] == c)
-                return false;
-        }
-        return true;
+        return result;
     }
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt(); // number of towers
-        int m = sc.nextInt(); // number of channels
-        int e = sc.nextInt(); // number of connections
 
-        List<List<Integer>> graph = new ArrayList<>();
-        for (int i = 0; i < n; i++)
-            graph.add(new ArrayList<>());
+        int n = sc.nextInt(); // number of gardens
+        int m = sc.nextInt(); // number of paths
 
-        for (int i = 0; i < e; i++) {
-            int u = sc.nextInt();
-            int v = sc.nextInt();
-            graph.get(u).add(v);
-            graph.get(v).add(u);
+        int[][] paths = new int[m][2];
+        for (int i = 0; i < m; i++) {
+            paths[i][0] = sc.nextInt();
+            paths[i][1] = sc.nextInt();
         }
 
-        int[] color = new int[n];
+        int[] result = assignFlowers(n, paths);
 
-        if (isColorable(graph, color, 0, m, n))
-            System.out.println("YES");
-        else
-            System.out.println("NO");
-
-        sc.close();
+        for (int flower : result) {
+            System.out.print(flower + " ");
+        }
+        System.out.println();
     }
 }
 
@@ -99,7 +108,7 @@ public class prog {
 
 ## Output:
 
-<img width="328" height="480" alt="image" src="https://github.com/user-attachments/assets/16b8b54d-cd45-4f2b-83d4-7404b3880ae2" />
+<img width="376" height="442" alt="image" src="https://github.com/user-attachments/assets/a3049eff-4141-4529-9744-c026b867932f" />
 
 
 ## Result:
